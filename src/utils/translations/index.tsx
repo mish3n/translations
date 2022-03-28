@@ -1,6 +1,7 @@
 import React, { ReactElement, ReactNode } from "react";
 import Bold from "../../components/TranslatedMolecules/Bold";
 import Italic from "../../components/TranslatedMolecules/Italic";
+import Link from "../../components/TranslatedMolecules/Link";
 
 interface Molecule {
     tag: string;
@@ -10,11 +11,13 @@ interface Molecule {
 const PH_OPEN = "{";
 const PH_CLOSE = "}";
 const TAG_OPEN = "<";
-const TAG_END = ">";
 const TAG_CLOSE = "/";
+const URL_OPEN = "[";
+const URL_CLOSE = "]";
+const LINK_TAG  = "a";
 
 export const processTranslation = (translation: string, args?: { [key: string]: string }): React.ReactNode => {
-    // TODO: handle invalid tags
+    // TODO: nested tagsdon't seem to work extreamly well (<b>meow <i>meow2</i></b>)
     // "Meow meow <b><i><a[https://www.google.com]>text: {meow}</a></i></b> hello"
     const result: ReactNode[] = [];
     const stack: Molecule[] = [];
@@ -46,7 +49,7 @@ export const processTranslation = (translation: string, args?: { [key: string]: 
                 const TagComponent = getComponentByTag(b!.tag);
 
                 const wrappedContent = (
-                    <TagComponent>
+                    <TagComponent {...b}>
                         {temp.map((x: ReactElement) => React.cloneElement(x))}
                     </TagComponent>
                 );
@@ -57,7 +60,19 @@ export const processTranslation = (translation: string, args?: { [key: string]: 
                 ind += 2;
             } else {
                 ++openTagsCount;
-                stack.push({ tag: nextChar });
+
+                let url = "";
+                if (nextChar === LINK_TAG) {
+                    if (translation[++ind] !== URL_OPEN) {
+                        throw new Error("INVALID_LINK_TAG");
+                    }
+
+                    while (translation[++ind] !== URL_CLOSE) {
+                        url += translation[ind];
+                    }
+                }
+
+                stack.push({ tag: nextChar, url });
                 ++ind;
             }
 
@@ -78,7 +93,6 @@ export const processTranslation = (translation: string, args?: { [key: string]: 
             }
             // TODO: validations
             const varValue = args![placeholder];
-            debugger;
             openTagsCount ? temp.push(<>{varValue}</>) : result.push(<>{varValue}</>);;
             continue;
         }
@@ -100,6 +114,9 @@ const getComponentByTag = (tag: string) => {
             return Bold;
         case "i":
             return Italic;
+        case "a":
+            // TODO: figure out url? later
+            return Link;
         default:
             throw new Error("INVALID_TAG");
     }

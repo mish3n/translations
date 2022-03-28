@@ -1,10 +1,10 @@
 interface Props {
-    url: string;
+    url?: string;
 }
 
 const Link: React.FC<Props> = ({ url, children }) => {
     return (
-        <a href={url}>{children}</a>
+        <a className="text-blue-500 underline" href={url}>{children}</a>
     );
 }
 
