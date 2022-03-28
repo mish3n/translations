@@ -17,19 +17,17 @@ const URL_CLOSE = "]";
 const LINK_TAG  = "a";
 
 export const processTranslation = (translation: string, args?: { [key: string]: string }): React.ReactNode => {
-    // TODO: nested tagsdon't seem to work extreamly well (<b>meow <i>meow2</i></b>)
-    // "Meow meow <b><i><a[https://www.google.com]>text: {meow}</a></i></b> hello"
     const result: ReactNode[] = [];
     const stack: Molecule[] = [];
-    const temp: ReactElement[] = [];
+    const temp: (ReactElement | null)[] = [];
 
     let openTagsCount = 0;
     let tempString = "";
     for (let ind = 0; ind < translation.length; ind++) {
         const char = translation[ind];
         if (char === TAG_OPEN) {
-            if (!openTagsCount && tempString) {
-                result.push(<>{tempString}</>);
+            if (tempString) {
+                openTagsCount ? temp.push(<>{tempString}</>) : result.push(<>{tempString}</>);
                 tempString = "";
             }
 
@@ -47,19 +45,27 @@ export const processTranslation = (translation: string, args?: { [key: string]: 
                 --openTagsCount;
                 const b = stack.pop();
                 const TagComponent = getComponentByTag(b!.tag);
+                const lastStoredTemps: ReactElement[] = [];
+                let lastTemp = null;
+                do {
+                    lastTemp = temp.pop();
+                    if (lastTemp) {
+                        lastStoredTemps.unshift(lastTemp);
+                    }
+                } while(lastTemp);
 
                 const wrappedContent = (
                     <TagComponent {...b}>
-                        {temp.map((x: ReactElement) => React.cloneElement(x))}
+                        {lastStoredTemps.map(x => React.cloneElement(x))}
                     </TagComponent>
                 );
-                temp.length = 0;
 
                 openTagsCount ? temp.push(wrappedContent) : result.push(wrappedContent);
 
                 ind += 2;
             } else {
                 ++openTagsCount;
+                temp.push(null);
 
                 let url = "";
                 if (nextChar === LINK_TAG) {
@@ -91,7 +97,7 @@ export const processTranslation = (translation: string, args?: { [key: string]: 
                 placeholder += translation[ind];
                 ++ind;
             }
-            // TODO: validations
+
             const varValue = args![placeholder];
             openTagsCount ? temp.push(<>{varValue}</>) : result.push(<>{varValue}</>);;
             continue;
@@ -115,7 +121,6 @@ const getComponentByTag = (tag: string) => {
         case "i":
             return Italic;
         case "a":
-            // TODO: figure out url? later
             return Link;
         default:
             throw new Error("INVALID_TAG");
