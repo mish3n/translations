@@ -1,5 +1,4 @@
 import React, { ReactElement, ReactNode } from "react";
-import { v4 } from "uuid";
 import Bold from "../../components/TranslatedMolecules/Bold";
 import Italic from "../../components/TranslatedMolecules/Italic";
 import Link from "../../components/TranslatedMolecules/Link";
@@ -130,6 +129,10 @@ export const processTranslation = (translation: string, args?: { [key: string]: 
         }
 
         tempString += char;
+    }
+
+    if (openTagsCount) {
+        throw new Error("INVALID_TRANSLATION_STRING");
     }
 
     if (tempString) {

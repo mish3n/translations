@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import React, { useMemo } from "react";
 import { processTranslation } from "../../utils/translations";
 
 interface Props {
@@ -9,7 +9,7 @@ interface Props {
 const Translated: React.FC<Props> = ({ text, args }) => {
     const processedTranslation = useMemo(() => processTranslation(text, args), [text, args]);
 
-    return <>{processedTranslation}</>;
+    return <React.Fragment key={"meow"}>{processedTranslation}</React.Fragment>;
 }
 
 export default Translated;
