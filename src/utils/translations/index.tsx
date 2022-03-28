@@ -1,53 +1,55 @@
 import { ReactNode } from "react";
 
-enum State {
+enum MoleculeType {
     Plain,
-    Placeholder
+    Bold,
+    Link,
+    Italic
 }
+
+interface Molecule {
+    type: MoleculeType;
+    value: string;
+    url?: string;
+}
+
+const PH_OPEN = "{";
+const PH_CLOSE = "}";
 
 export const processTranslation = (translation: string, args?: { [key: string]: string }): React.ReactNode => {
     // "Meow meow <b><i><a[https://www.google.com]>text: {meow}</a></i></b> hello"
-    const result: ReactNode[] = [
-        "<meow></meow><b><i><a><p>1</p>,<p>2</p></a></i></b> hello"
-    ];
-    let state = State.Plain;
-    let openTagsCounter = 0;
-    const stack = [];
-    const temp = []
-    //if stack ampty - append
-    //if !stack.empty - prepend
+    const result: ReactNode[] = [];
+    const stack: Molecule[] = [];
+    const temp: ReactNode[] = [];
 
-    //if openTagsCounter === 0, append to result
-    //else - append to temp
+    let openTagsCount = 0;
+    let tempString = "";
     for (let ind = 0; ind < translation.length; ind++) {
-        /**
-         [<>Meow meow <meoww/>, <b>, <i>, <a[url]>, <text/>, <meow/> <hello/>]
+        const char = translation[ind];
+        if (char === PH_OPEN) {
+            if (tempString) {
+                result.push(<>{tempString}</>);
+                tempString = "";
+            }
 
+            ++ind;
+            let placeholder = "";
+            while (translation[ind] !== PH_CLOSE) {
+                placeholder += translation[ind];
+                ++ind;
+            }
+            // TODO: validations
+            const varValue = args![placeholder];
+            result.push(<>{varValue}</>);
+            continue;
+        }
 
+        tempString += char;
+    }
 
-         * plain
-         <-- <>Meow meow </>
-        * b
-        <-- <b>
-        * openingTag
-        * i
-        <-- <i>
-        * openingTag
-        * a
-        * opening [
-        * read url
-        * closing ]
-        <-- a
-        * closingTag
-        * plain
-        * {
-        * readPlaceholder
-        * }
-        * clodingTag a
-        * closingTag i
-        * closing Tag b
-        * plain hello
-         */
+    if (tempString) {
+        result.push(<>{tempString}</>);
+        tempString = "";
     }
 
     return <>{result}</>;
