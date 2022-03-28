@@ -5,7 +5,7 @@ const App: React.FC = () => (
     <div className="App">
         <header className="App-header">
             Translated: <Translated
-                text="<b><i><a[https://www.google.com]>{meow}</a></i></b>"
+                text="kotak <i><b>Andrew McNeill</b></i> der Katter <b><i>purr {meow}</i></b> hello hello"
                 args={{ meow: "me-ow" }}
             />
         </header>
