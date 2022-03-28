@@ -1,4 +1,5 @@
 import React, { ReactElement, ReactNode } from "react";
+import { v4 } from "uuid";
 import Bold from "../../components/TranslatedMolecules/Bold";
 import Italic from "../../components/TranslatedMolecules/Italic";
 import Link from "../../components/TranslatedMolecules/Link";
@@ -43,8 +44,8 @@ export const processTranslation = (translation: string, args?: { [key: string]: 
                 }
 
                 --openTagsCount;
-                const b = stack.pop();
-                const TagComponent = getComponentByTag(b!.tag);
+                const lastTag = stack.pop();
+                const TagComponent = getComponentByTag(lastTag!.tag);
                 const lastStoredTemps: ReactElement[] = [];
                 let lastTemp = null;
                 do {
@@ -55,8 +56,8 @@ export const processTranslation = (translation: string, args?: { [key: string]: 
                 } while (lastTemp);
 
                 const wrappedContent = (
-                    <TagComponent {...b}>
-                        {lastStoredTemps.map(x => React.cloneElement(x))}
+                    <TagComponent {...lastTag}>
+                        {lastStoredTemps.map(x => ({...x}))}
                     </TagComponent>
                 );
 
