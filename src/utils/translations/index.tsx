@@ -12,7 +12,7 @@ export const processTranslation = (translation: string, args?: { [key: string]: 
     ];
     let state = State.Plain;
     let openTagsCounter = 0;
-    const stack = [<b></b>];
+    const stack = [];
     const temp = []
     //if stack ampty - append
     //if !stack.empty - prepend
