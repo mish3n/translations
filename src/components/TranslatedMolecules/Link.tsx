@@ -1,3 +1,5 @@
+import withUuidKey from "../../utils/withUuidKey";
+
 interface Props {
     url?: string;
 }
@@ -8,4 +10,4 @@ const Link: React.FC<Props> = ({ url, children }) => {
     );
 }
 
-export default Link;
+export default withUuidKey(Link);
