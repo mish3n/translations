@@ -1,6 +1,10 @@
-const Link: React.FC = ({ children }) => {
+interface Props {
+    url: string;
+}
+
+const Link: React.FC<Props> = ({ url, children }) => {
     return (
-        <span className="font-bold">{children}</span>
+        <a href={url}>{children}</a>
     );
 }
 
