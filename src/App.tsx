@@ -9,7 +9,8 @@ const App: React.FC = () => (
                 args={{ meow: "me-ow" }}
             /> */}
             <span className="m-20">
-                <Translated text="0<i>A<b>B</b></i>" />
+                {/* <Translated text="0<i>A<b>B</b>{meow}</i><a[{googleUrl}]><b>der</b> <i>Katter</i></a>" args={{ meow: "me-ow", googleUrl: "http://google.com" }} /> */}
+                <Translated text="<a[{googleUrl}]>G</a>" args={{ meow: "me-ow", googleUrl: "http://google.com" }} />
             </span>
         </header>
     </div>

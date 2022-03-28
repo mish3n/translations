@@ -14,7 +14,7 @@ const TAG_OPEN = "<";
 const TAG_CLOSE = "/";
 const URL_OPEN = "[";
 const URL_CLOSE = "]";
-const LINK_TAG  = "a";
+const LINK_TAG = "a";
 
 export const processTranslation = (translation: string, args?: { [key: string]: string }): React.ReactNode => {
     const result: ReactNode[] = [];
@@ -52,7 +52,7 @@ export const processTranslation = (translation: string, args?: { [key: string]: 
                     if (lastTemp) {
                         lastStoredTemps.unshift(lastTemp);
                     }
-                } while(lastTemp);
+                } while (lastTemp);
 
                 const wrappedContent = (
                     <TagComponent {...b}>
@@ -69,12 +69,31 @@ export const processTranslation = (translation: string, args?: { [key: string]: 
 
                 let url = "";
                 if (nextChar === LINK_TAG) {
+                    
                     if (translation[++ind] !== URL_OPEN) {
                         throw new Error("INVALID_LINK_TAG");
                     }
 
-                    while (translation[++ind] !== URL_CLOSE) {
-                        url += translation[ind];
+                    if (translation[ind + 1] === PH_OPEN) {
+                        ++ind;
+                        if (!args) {
+                            throw new Error("MISSING_ARGS");
+                        }
+
+                        let urlKey = "";
+                        while (translation[++ind] !== PH_CLOSE) {
+                            urlKey += translation[ind];
+                        }
+                        url = args[urlKey];
+                        if (!url) {
+                            throw new Error(`MISSING_ARG: ${urlKey}`);
+                        }
+
+                        ++ind;
+                    } else {
+                        while (translation[++ind] !== URL_CLOSE) {
+                            url += translation[ind];
+                        }
                     }
                 }
 
@@ -86,19 +105,25 @@ export const processTranslation = (translation: string, args?: { [key: string]: 
         }
 
         if (char === PH_OPEN) {
+            if (!args) {
+                throw new Error("MISSING_ARGS");
+            }
+
             if (tempString) {
                 openTagsCount ? temp.push(<>{tempString}</>) : result.push(<>{tempString}</>);
                 tempString = "";
             }
 
-            ++ind;
             let placeholder = "";
-            while (translation[ind] !== PH_CLOSE) {
+            while (translation[++ind] !== PH_CLOSE) {
                 placeholder += translation[ind];
-                ++ind;
             }
 
             const varValue = args![placeholder];
+            if (!varValue) {
+                throw new Error(`MISSING_ARG: ${placeholder}`);
+            }
+
             openTagsCount ? temp.push(<>{varValue}</>) : result.push(<>{varValue}</>);;
             continue;
         }

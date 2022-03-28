@@ -6,7 +6,9 @@ interface Props {
 
 const Link: React.FC<Props> = ({ url, children }) => {
     return (
-        <a className="text-blue-500 underline" href={url}>{children}</a>
+        <a target="_blank" className="text-blue-500 underline" href={url}>
+            {children}
+        </a>
     );
 }
 
