@@ -23,112 +23,6 @@ export const processTranslation = (translation: string, args?: { [key: string]: 
     let openTagsCount = 0;
     let tempString = "";
 
-    const readUntil = (char: string) => (ind: number, temp: string) => {
-        while (translation[++ind] !== char) {
-            temp += translation[ind];
-        }
-
-        return { ind, temp };
-    }
-
-    const handleOpeningTag = (nextChar: string, ind: number) => {
-        nestedStack.push(null);
-
-        let url = "";
-        if (nextChar === LINK_TAG) {
-            ({ ind, url } = handleLinkTag(ind, url));
-        }
-
-        stack.push({ tag: nextChar, url });
-        return ind;
-    }
-
-    const handleClosingTag = (tempString: string, ind: number) => {
-        if (!stack.length) {
-            throw new Error("INVALID_TRANSLATION_STRING");
-        }
-
-        if (tempString) {
-            nestedStack.push(<>{tempString}</>);
-        }
-
-        const lastTag = stack.pop();
-        const TagComponent = getComponentByTag(lastTag!.tag);
-        const lastStoredTemps = getNestedElements();
-
-        const wrappedContent = (
-            <TagComponent {...lastTag}>
-                {lastStoredTemps.map(x => ({ ...x }))}
-            </TagComponent>
-        );
-
-        pushToCorrectStack(wrappedContent);
-        return ind + 2;
-    }
-
-    const handleLinkTag = (ind: number, url: string) => {
-        if (translation[++ind] !== URL_OPEN) {
-            throw new Error("INVALID_LINK_TAG");
-        }
-
-        if (translation[ind + 1] === PH_OPEN) {
-            ++ind;
-            if (!args) {
-                throw new Error("MISSING_ARGS");
-            }
-
-            let urlKey = "";
-            ({ ind, temp: urlKey } = readUntil(PH_CLOSE)(ind, urlKey));
-            url = getPlaceholderValue(urlKey);
-
-            ++ind;
-        } else {
-            ({ ind, temp: url } = readUntil(URL_CLOSE)(ind, url));
-        }
-        return { ind, url };
-    }
-
-    const handlePlaceholder = (tempString: string, ind: number) => {
-        if (!args) {
-            throw new Error("MISSING_ARGS");
-        }
-
-        if (tempString) {
-            pushToCorrectStack(tempString);
-        }
-
-        let placeholder = "";
-        ({ ind, temp: placeholder } = readUntil(PH_CLOSE)(ind, placeholder));
-
-        const varValue = getPlaceholderValue(placeholder);
-        pushToCorrectStack(varValue);
-        return ind;
-    }
-
-    const getPlaceholderValue = (key: string) => {
-        const varValue = args![key];
-        if (!varValue) {
-            throw new Error(`MISSING_ARG: ${key}`);
-        }
-        return varValue;
-    }
-
-    const getNestedElements = () => {
-        const lastStoredTemps: ReactElement[] = [];
-        let lastTemp = null;
-        do {
-            lastTemp = nestedStack.pop();
-            if (lastTemp) {
-                lastStoredTemps.unshift(lastTemp);
-            }
-        } while (lastTemp);
-        return lastStoredTemps;
-    }
-
-    const pushToCorrectStack = (element: React.ReactElement | string) => {
-        openTagsCount ? nestedStack.push(<>{element}</>) : result.push(<>{element}</>);
-    }
-
     for (let ind = 0; ind < translation.length; ind++) {
         const char = translation[ind];
         if (char === TAG_OPEN) {
@@ -170,6 +64,117 @@ export const processTranslation = (translation: string, args?: { [key: string]: 
     }
 
     return <>{result}</>;
+
+    function readUntil(char: string) {
+        return (ind: number, temp: string) => {
+            while (translation[++ind] !== char) {
+                temp += translation[ind];
+            }
+
+            return { ind, temp };
+        };
+    }
+
+    function handleOpeningTag(nextChar: string, ind: number) {
+        nestedStack.push(null);
+
+        let url = "";
+        if (nextChar === LINK_TAG) {
+            ({ ind, url } = handleLinkTag(ind, url));
+        }
+
+        stack.push({ tag: nextChar, url });
+        return ind;
+    }
+
+    function handleClosingTag(tempString: string, ind: number) {
+        if (!stack.length) {
+            throw new Error("INVALID_TRANSLATION_STRING");
+        }
+
+        if (tempString) {
+            nestedStack.push(<>{tempString}</>);
+        }
+
+        const lastTag = stack.pop();
+        const TagComponent = getComponentByTag(lastTag!.tag);
+        const lastStoredTemps = getNestedElements();
+
+        const wrappedContent = (
+            <TagComponent {...lastTag}>
+                {lastStoredTemps.map(x => ({ ...x }))}
+            </TagComponent>
+        );
+
+        pushToCorrectStack(wrappedContent);
+        return ind + 2;
+    }
+
+    function handleLinkTag(ind: number, url: string) {
+        if (translation[++ind] !== URL_OPEN) {
+            throw new Error("INVALID_LINK_TAG");
+        }
+
+        if (translation[ind + 1] === PH_OPEN) {
+            ++ind;
+            if (!args) {
+                throw new Error("MISSING_ARGS");
+            }
+
+            let urlKey = "";
+            ({ ind, temp: urlKey } = readUntil(PH_CLOSE)(ind, urlKey));
+            url = getPlaceholderValue(urlKey);
+
+            ++ind;
+        } else {
+            ({ ind, temp: url } = readUntil(URL_CLOSE)(ind, url));
+        }
+
+        return { ind, url };
+    }
+
+    function handlePlaceholder(tempString: string, ind: number) {
+        if (!args) {
+            throw new Error("MISSING_ARGS");
+        }
+
+        if (tempString) {
+            pushToCorrectStack(tempString);
+        }
+
+        let placeholder = "";
+        ({ ind, temp: placeholder } = readUntil(PH_CLOSE)(ind, placeholder));
+
+        const varValue = getPlaceholderValue(placeholder);
+        pushToCorrectStack(varValue);
+        return ind;
+    }
+
+    function getPlaceholderValue(key: string) {
+        const varValue = args![key];
+        if (!varValue) {
+            throw new Error(`MISSING_ARG: ${key}`);
+        }
+
+        return varValue;
+    }
+
+    function getNestedElements() {
+        const lastStoredTemps: ReactElement[] = [];
+        let lastTemp = null;
+        do {
+            lastTemp = nestedStack.pop();
+            if (lastTemp) {
+                lastStoredTemps.unshift(lastTemp);
+            }
+        } while (lastTemp);
+
+        return lastStoredTemps;
+    }
+
+    function pushToCorrectStack(element: React.ReactElement | string) {
+        openTagsCount ? nestedStack.push(<>{element}</>) : result.push(<>{element}</>);
+    }
 }
 
 const getComponentByTag = (tag: string) => {
